@@ -1,0 +1,21 @@
+[Databaseprod]
+proddb1 ansible_host=668d5818-5cf5-4c2f-8e38-7bc23921aba9.ma.bw-cloud-instance.org
+proddb2 ansible_host=68b0c9d0-3140-40d3-bfd2-b8cbb6325444.ma.bw-cloud-instance.org
+proddb3 ansible_host=dd5557ce-6f9a-4473-8bfd-b9a65140ad43.ma.bw-cloud-instance.org
+
+[Frontandbackendprod]
+prodfebe1 ansible_host=23725fa7-6e18-4588-8cdd-0472e98674d9.ma.bw-cloud-instance.org
+
+[APIgateprod]
+prodapigw1 ansible_host=a269a13e-6c88-4f41-af51-1b429fef730f.ma.bw-cloud-instance.org
+
+# all production servers
+[Allprod:children]
+Databaseprod
+Frontandbackendprod
+APIgateprod
+
+
+[Allprod:vars]
+ansible_user=centos
+ansible_ssh_private_key_file=/Users/alex/.ssh/Kanban
