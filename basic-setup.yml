@@ -1,0 +1,128 @@
+############################
+# Setup for all servers 
+############################
+
+---
+- name: Starting setup for two environments including 10 servers in total 
+  hosts: all
+  tasks: 
+
+    - name: Install a list of packages (podman=docker)
+      ansible.builtin.yum:
+        name:
+          - podman-docker=3.3.1
+        state: present
+
+    - name: Set alias for podman to docker
+      ansible.builtin.shell: 
+        cmd: cd
+        cmd: echo "alias docker='podman'" >> .bashrc
+
+    - name: Copy the binary of docker-compose to servers with executable permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/docker-compose
+        dest: /usr/local/bin/docker-compose
+        mode: u=rwx,g=rx,o=rx
+        backup: yes
+
+    - name: Copy the sudoers file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/sudoers
+        dest: /etc/sudoers
+        owner: root
+        group: root
+        mode: u=r,g=r
+        backup: yes
+
+
+
+
+############################
+# APIgw setup from here on
+############################
+---
+- name: Basic setup
+  hosts: APIgatestage:APIgateprod
+  tasks: 
+    - name: Copy a new "docker-compose.yml" file, specifically for the APIgateway into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/apigw/docker-compose.yml
+        dest: /home/centos
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+
+
+############################
+# DB1 setup from here on
+############################
+---
+- name: Basic setup
+  hosts: proddb1:stagedb1
+  tasks: 
+    - name: Copy a new "docker-compose.yml" file, specifically for the database1 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db1/docker-compose.yml
+        dest: /home/centos
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+
+############################
+# DB2 setup from here on
+############################
+---
+- name: Basic setup
+  hosts: proddb2:stagedb2
+  tasks: 
+    - name: Copy a new "docker-compose.yml" file, specifically for the database2 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db2/docker-compose.yml
+        dest: /home/centos
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+
+############################
+# DB3 setup from here on
+############################
+---
+- name: Basic setup
+  hosts: proddb3:stagedb3
+  tasks: 
+    - name: Copy a new "docker-compose.yml" file, specifically for the database3 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db3/docker-compose.yml
+        dest: /home/centos
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+
+############################
+# Setting up users
+############################
+
+  tasks:
+    - name: Create alex user 
+      user:
+        name: alex
+        createhome: yes
+    - name: Copy alex SSH key  
+      authorized_key:
+        user: alex
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/alexander-krug.pub') }}"
+
+asks:
+    - name: Create user 
+      user:
+        name: deniz
+        createhome: yes
+    - name: Copy user SSH key  
+      authorized_key:
+        user: deniz
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/YuekselDeniz.pub') }}"
+

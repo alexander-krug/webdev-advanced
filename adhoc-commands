@@ -1,0 +1,9 @@
+# fix repos not pointing to vaul
+ansible -i production Allprod -m shell -a "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*" --become
+ansible -i staging Allstage -m shell -a "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*" --become
+# ansible multi -s -m yum -a "name=httpd state=installed"
+ansible -i production Frontandbackendprod:Databaseprod -m yum -a "name=SomeProgramToInstall state=installed"
+ansible -i staging Frontandbackendstage:Databasestage -m yum -a "name=SomeProgramToInstall state=installed"
+
+# 
+ansible -i staging all -i production --become -m yum -a "name=docker state=installed"

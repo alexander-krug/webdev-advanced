@@ -2,12 +2,17 @@
 stagedb1 ansible_host=128cdb17-3cf0-49e7-90f0-11d792fdca09.ma.bw-cloud-instance.org
 stagedb2 ansible_host=0818ba12-a8f5-4d0f-a18d-393aeff0cbf2.ma.bw-cloud-instance.org
 stagedb3 ansible_host=6d5ea713-e2c6-4c96-84e8-240a02b5454a.ma.bw-cloud-instance.org
+#stagedb1 ansible_host=2001:7c0:2320:2:f816:3eff:fe70:ea1
+#stagedb2 ansible_host=2001:7c0:2320:2:f816:3eff:fe4a:244
+#stagedb3 ansible_host=2001:7c0:2320:2:f816:3eff:fe20:cc49
 
 [Frontandbackendstage]
 stagefebe1 ansible_host=b44fc870-44fd-4517-8f54-b806fb595625.ma.bw-cloud-instance.org
+#stagefebe1 ansible_host=2001:7c0:2320:2:f816:3eff:fe17:7990
 
 [APIgatestage]
 stageapigw1 ansible_host=d962f587-828a-4250-b860-698aff6dca61.ma.bw-cloud-instance.org
+#stageapigw1 ansible_host=2001:7c0:2320:2:f816:3eff:fe3c:2f63
 
 # all staging servers
 [Allstage:children]
