@@ -2,7 +2,7 @@ version: '3'
 
 services:
   registrator:
-      image: gliderlabs/registrator:latest
+      image: gliderlabs/registrator:master
       command:
         - "-internal"
         - "-resync=30s"
@@ -11,7 +11,7 @@ services:
         - "/var/run/docker.sock:/tmp/docker.sock"
 
   database:
-    image: mariadb:latest
+    image: mariadb:10.7
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.database1.rule=Host(`database3.example.com`)"

@@ -21,10 +21,11 @@ services:
   consul:
     image: hashicorp/consul:v1.15.0
     container_name: consul 
+    command: "agent -server -ui -bootstrap-expect=1 -client=0.0.0.0"
     ports:
       - 8500:8500
     labels:
-      - "de.zalando.gridRole=hub"
+      - "de.wi2021a.gridRole=hub"
     volumes:
       - "./consul/data:/consul/data"
 
