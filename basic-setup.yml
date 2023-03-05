@@ -1,28 +1,43 @@
-############################
-# Setup for all servers 
-############################
-
 ---
+# Setup for all Servers
 - name: Starting setup for two environments including 10 servers in total 
   hosts: all
   tasks: 
 
-    - name: Install a list of packages (podman=docker)
+    - name: Install a list of packages (sysstat for monitoring)
       ansible.builtin.yum:
         name:
-          - podman-docker=3.3.1
+          - sysstat
+          - podman
+          - podman-docker
         state: present
 
-    - name: Set alias for podman to docker
-      ansible.builtin.shell: 
-        cmd: cd
-        cmd: echo "alias docker='podman'" >> .bashrc
+    - name: Start and enable sysstat for the sar command to work
+      ansible.builtin.command:
+        cmd: sudo systemctl enable --now sysstat
+
+    - name: Start and enable podman for the docker-compose command to work
+      ansible.builtin.command:
+        cmd: sudo systemctl enable --now podman
+        cmd: sudo systemctl enable --now podman.socket
+        #cmd: sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+    - name: Copy the .bashrc file (alias for podman), with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/.bashrc
+        dest: /home/centos/.bashrc
+        owner: centos
+        group: centos
+        mode: u=rw,g=r,o=r
+        backup: yes
 
     - name: Copy the binary of docker-compose to servers with executable permissions, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/docker-compose
         dest: /usr/local/bin/docker-compose
         mode: u=rwx,g=rx,o=rx
+        owner: root
+        group: root
         backup: yes
 
     - name: Copy the sudoers file, with fitting permissions, backing up the original if it differs from the copied version
@@ -31,98 +46,207 @@
         dest: /etc/sudoers
         owner: root
         group: root
-        mode: u=r,g=r
+        mode: u=rw,g=r
         backup: yes
 
+    - name: Create dhbw group
+      group:
+        name: dhbw
+        state: present
+
+    - name: Create /dhbw directory
+      file:
+        path: /dhbw
+        state: directory
+        owner: root
+        group: dhbw
+        mode: '0755'
 
 
+# ###########################
+# production environment setup 
+# ###########################
+
+    - name: Copy the hosts file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/production-environment/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      when: inventory_hostname in groups['Databaseprod'] + groups['Frontandbackendprod'] + groups['APIgateprod']
+
+############################
+# staging environment setup 
+############################
+
+    - name: Copy the hosts file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/staging-environment/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      when: inventory_hostname in groups['Databasestage'] + groups['Frontandbackendstage'] + groups['APIgatestage']
 
 ############################
 # APIgw setup from here on
 ############################
----
-- name: Basic setup
-  hosts: APIgatestage:APIgateprod
-  tasks: 
+
+
     - name: Copy a new "docker-compose.yml" file, specifically for the APIgateway into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/apigw/docker-compose.yml
-        dest: /home/centos
-        owner: centos
-        group: centos
+        dest: /dhbw
+        owner: root
+        group: dhbw
         mode: '0644'
         backup: yes
+      when: inventory_hostname in groups['APIgatestage'] + groups['APIgateprod']
+
+############################
+# Front- and Backend setup from here on
+############################
+
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the Front- and Backend into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/febe/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in groups['Frontandbackendstage'] + groups['Frontandbackendprod']
 
 
 ############################
 # DB1 setup from here on
 ############################
----
-- name: Basic setup
-  hosts: proddb1:stagedb1
-  tasks: 
+
     - name: Copy a new "docker-compose.yml" file, specifically for the database1 servers into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/db/db1/docker-compose.yml
-        dest: /home/centos
-        owner: centos
-        group: centos
+        dest: /dhbw
+        owner: root
+        group: dhbw
         mode: '0644'
         backup: yes
+      when: inventory_hostname in ['proddb1', 'stagedb1']
 
 ############################
 # DB2 setup from here on
 ############################
----
-- name: Basic setup
-  hosts: proddb2:stagedb2
-  tasks: 
+
     - name: Copy a new "docker-compose.yml" file, specifically for the database2 servers into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/db/db2/docker-compose.yml
-        dest: /home/centos
-        owner: centos
-        group: centos
+        dest: /dhbw
+        owner: root
+        group: dhbw
         mode: '0644'
         backup: yes
+      when: inventory_hostname in ['proddb2', 'stagedb2']
 
 ############################
 # DB3 setup from here on
 ############################
----
-- name: Basic setup
-  hosts: proddb3:stagedb3
-  tasks: 
+
     - name: Copy a new "docker-compose.yml" file, specifically for the database3 servers into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/db/db3/docker-compose.yml
-        dest: /home/centos
-        owner: centos
-        group: centos
+        dest: /dhbw
+        owner: root
+        group: dhbw
         mode: '0644'
         backup: yes
+      when: inventory_hostname in ['proddb3', 'stagedb3']
 
 ############################
-# Setting up users
+# Setting up infrastructure users
 ############################
 
-  tasks:
-    - name: Create alex user 
+    - name: Create user alex
       user:
         name: alex
+        groups: dhbw
         createhome: yes
+        state: present
     - name: Copy alex SSH key  
       authorized_key:
         user: alex
         key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/alexander-krug.pub') }}"
+        state: present
 
-asks:
+    - name: Create user niclas
+      user:
+        name: niclas
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy niclas SSH key  
+      authorized_key:
+        user: niclas
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/NiclasPreusche.pub') }}"
+        state: present
+
+
+############################
+# Setting up all other users
+############################
+
+############################ database
+
+
+
+
+
+############################ front- and backend
+
+- name: Users setup Database
+  hosts: Frontandbackendprod:Frontandbackendstage
+  tasks:
     - name: Create user 
       user:
-        name: deniz
+        name: david
+        groups: dhbw
         createhome: yes
+        state: present
     - name: Copy user SSH key  
       authorized_key:
-        user: deniz
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/YuekselDeniz.pub') }}"
+        user: david
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/DavidHolzwarth.pub') }}"
+        state: present
 
+
+    - name: Create user 
+      user:
+        name: benny
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: benny
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/BenjaminWillim.pub') }}"
+        state: present
+
+############################ api gateway
+
+- name: Users setup APIGW
+  hosts: APIgatestage:APIgateprod
+  tasks:
+
+    - name: Create user 
+      user:
+        name: silas
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: silas
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/silas-schlotz.pub') }}"
+        state: present
