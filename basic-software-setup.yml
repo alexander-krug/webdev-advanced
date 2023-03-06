@@ -1,0 +1,46 @@
+
+
+---
+############################
+# Front- and Backend 
+############################
+
+- name: Software setup on FEBE
+  gather_facts: false 
+  hosts: Frontandbackendstage:Frontandbackendprod
+  tasks:
+    - name: Install nodejs version 
+      ansible.builtin.yum:
+        name:
+          - nodejs-10.24.0
+        state: present
+
+
+############################
+# DB setup
+############################
+
+- name: Software setup on FEBE
+  gather_facts: false 
+  hosts: Databaseprod:Databasestage
+  tasks:
+    - name: Install nodejs version 
+      ansible.builtin.yum:
+        name:
+          - mariadb-10.3.28
+        state: present
+
+############################
+# API Gateway setup
+############################
+
+# express gateway runs on nodejs
+- name: Software setup on API Gateway
+  gather_facts: false
+  hosts: APIgateprod:APIgatestage
+  tasks:
+    - name: Install nodejs version 
+      ansible.builtin.yum:
+        name:
+          - nodejs-10.24.0
+        state: present

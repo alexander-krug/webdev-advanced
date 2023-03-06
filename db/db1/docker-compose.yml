@@ -10,12 +10,12 @@ services:
       volumes:
         - "/var/run/docker.sock:/tmp/docker.sock"
 
-  database:
-    image: mariadb:10.7
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.database1.rule=Host(`database1.example.com`)"
-      - "traefik.http.routers.database1.entrypoints=web"
-      - "traefik.http.services.database1.loadbalancer.server.port=80"
-    environment:
-      - "CONSUL_HTTP_ADDR=http://consul:8500"      
+#  database:
+#    image: mariadb:10.7
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.database1.rule=Host(`database1.example.com`)"
+#      - "traefik.http.routers.database1.entrypoints=web"
+#      - "traefik.http.services.database1.loadbalancer.server.port=80"
+#    environment:
+#      - "CONSUL_HTTP_ADDR=http://consul:8500"      
