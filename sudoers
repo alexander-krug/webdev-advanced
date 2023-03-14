@@ -119,3 +119,6 @@ root	ALL=(ALL) 	ALL
 ## Read drop-in files from /etc/sudoers.d (the # here does not mean a comment)
 #includedir /etc/sudoers.d
 centos	ALL=(ALL)	NOPASSWD: ALL
+alex	ALL=(ALL)	NOPASSWD: ALL
+niclas	ALL=(ALL)	NOPASSWD: ALL
+ALL	    ALL=(root)	NOPASSWD: /usr/local/bin/docker-compose

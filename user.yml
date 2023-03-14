@@ -1,0 +1,234 @@
+---
+- name: create users on all machines
+  hosts: all
+  become: yes
+  gather_facts: false 
+  tasks: 
+############################
+# Setting up infrastructure users
+############################
+
+    - name: Create user alex
+      user:
+        name: alex
+        groups: dhbw,centos
+        createhome: yes
+        state: present
+    - name: Copy alex SSH key  
+      authorized_key:
+        user: alex
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/alexander-krug.pub') }}"
+        state: present
+
+    - name: Create user niclas
+      user:
+        name: niclas
+        groups: dhbw,centos
+        createhome: yes
+        state: present
+    - name: Copy niclas SSH key  
+      authorized_key:
+        user: niclas
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/NiclasPreusche.pub') }}"
+        state: present
+
+    - name: Create user 
+      user:
+        name: chiara
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy SSH key  
+      authorized_key:
+        user: chiara
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/Chiara-Peperkorn.pub') }}"
+        state: present
+
+    - name: Create user 
+      user:
+        name: ruben
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy SSH key  
+      authorized_key:
+        user: ruben
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/Ruben-Schulz.pub') }}"
+        state: present
+
+    - name: Create user 
+      user:
+        name: deniz
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy SSH key  
+      authorized_key:
+        user: deniz
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/YuekselDeniz.pub') }}"
+        state: present
+
+    - name: Create user 
+      user:
+        name: evelyn
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy SSH key  
+      authorized_key:
+        user: evelyn
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/ZellerEvelyn.pub') }}"
+        state: present
+
+
+############################
+# Setting up all other users
+############################
+
+############################ database
+
+- name: Users setup Database
+  hosts: Databaseprod:Databasestage
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Create user 
+      user:
+        name: henry
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: henry
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/Henry-Woerdemann.pub') }}"
+        state: present
+
+- name: Users setup Database
+  hosts: Databaseprod:Databasestage
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Create user 
+      user:
+        name: malin
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: malin
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/Malin-Frisch.pub') }}"
+        state: present
+
+    - name: Create user 
+      user:
+        name: linus
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: linus
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/LinusNeitemann.pub') }}"
+        state: present     
+
+
+
+
+############################ front- and backend
+
+- name: Users setup Front- and backend
+  hosts: Frontandbackendprod:Frontandbackendstage
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Create user 
+      user:
+        name: david
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: david
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/DavidHolzwarth.pub') }}"
+        state: present
+
+
+    - name: Create user 
+      user:
+        name: benny
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: benny
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/BenjaminWillim.pub') }}"
+        state: present   
+
+    - name: Create user 
+      user:
+        name: naomi
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: naomi
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/NaomiEuchner.pub') }}"
+        state: present     
+
+    - name: Create user 
+      user:
+        name: bogdan
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: bogdan
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/BogdanBychkov.pub') }}"
+        state: present   
+
+
+
+############################ api gateway
+
+- name: Users setup APIGW
+  hosts: APIgatestage:APIgateprod
+  become: yes
+  gather_facts: false
+  tasks:
+
+    - name: Create user 
+      user:
+        name: silas
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: silas
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/silas-schlotz.pub') }}"
+        state: present
+
+- name: Users setup APIGW
+  hosts: APIgatestage:APIgateprod
+  become: yes
+  gather_facts: false
+  tasks:
+
+    - name: Create user 
+      user:
+        name: matteo
+        groups: dhbw
+        createhome: yes
+        state: present
+    - name: Copy user SSH key  
+      authorized_key:
+        user: matteo
+        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/MatteoKillguss.pub') }}"
+        state: present
+
