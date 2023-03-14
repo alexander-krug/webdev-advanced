@@ -7,3 +7,9 @@ ansible -i staging Frontandbackendstage:Databasestage -m yum -a "name=SomeProgra
 
 # 
 ansible -i staging all -i production --become -m yum -a "name=docker state=installed"
+
+#check ressource usage in the last hour
+ansible -i production -i staging all -m shell -a "sar -u -s $(date -d '1 hour ago' +'%H:%M:%S') | tail -n 2"
+
+# Fix IPv6 problem for docker images
+ansible -i production -i staging all -m shell -a "docker login registry.ipv6.docker.com"
