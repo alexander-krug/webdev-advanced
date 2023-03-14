@@ -1,0 +1,6 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+d962f587-828a-4250-b860-698aff6dca61.ma.bw-cloud-instance.org consul #stageapigw1
+# mit "hosts" command ermittelte IPv6 Adressen für NPM Downloadserver
+2606:4700::6810:1323 registry.npmjs.org
