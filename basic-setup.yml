@@ -10,16 +10,27 @@
           - sysstat
           - podman
           - podman-docker
+          - bash-completion
+          - firewalld
         state: present
 
     - name: Start and enable sysstat for the sar command to work
-      ansible.builtin.command:
-        cmd: sudo systemctl enable --now sysstat
+      service:
+        name: sysstat 
+        enabled: true
+        state: started
 
-    - name: Start and enable podman for the docker-compose command to work
-      ansible.builtin.command:
-        cmd: sudo systemctl enable --now podman
-        cmd: sudo systemctl enable --now podman.socket
+    - name: Start and enable podman.socket for the docker-compose command to work
+      service: 
+        name: podman
+        enabled: true
+        state: started
+
+    - name: Start and enable podman.socket for the docker-compose command to work
+      service: 
+        name: podman.socket
+        enabled: true
+        state: started
         #cmd: sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
     - name: Copy the .bashrc file (alias for podman), with fitting permissions, backing up the original if it differs from the copied version
@@ -40,6 +51,7 @@
         group: root
         backup: yes
 
+    #FIXME: work with sudoers.d
     - name: Copy the sudoers file, with fitting permissions, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/sudoers
@@ -95,7 +107,6 @@
 # APIgw setup from here on
 ############################
 
-
     - name: Copy a new "docker-compose.yml" file, specifically for the APIgateway into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
         src: /Users/alex/github/webdev-advanced/apigw/docker-compose.yml
@@ -106,11 +117,10 @@
         backup: yes
       when: inventory_hostname in groups['APIgatestage'] + groups['APIgateprod']
 
+
 ############################
 # Front- and Backend setup from here on
 ############################
-
-
 
     - name: Copy a new "docker-compose.yml" file, specifically for the Front- and Backend into place, backing up the original if it differs from the copied version
       ansible.builtin.copy:
@@ -167,89 +177,32 @@
         backup: yes
       when: inventory_hostname in ['proddb3', 'stagedb3']
 
-############################
-# Setting up infrastructure users
-############################
 
-    - name: Create user alex
-      user:
-        name: alex
-        groups: dhbw
-        createhome: yes
-        state: present
-    - name: Copy alex SSH key  
-      authorized_key:
-        user: alex
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/alexander-krug.pub') }}"
-        state: present
+# ###########################
+# mariadb setup 
+# ###########################
+- name: Settup up mariadb so it can be used on all DB servers 
+  hosts: Databaseprod:Databasestage
+  become: true
+  tasks: 
 
-    - name: Create user niclas
-      user:
-        name: niclas
-        groups: dhbw
-        createhome: yes
-        state: present
-    - name: Copy niclas SSH key  
-      authorized_key:
-        user: niclas
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/NiclasPreusche.pub') }}"
-        state: present
-
-
-############################
-# Setting up all other users
-############################
-
-############################ database
-
-
-
-
-
-############################ front- and backend
-
-- name: Users setup Database
-  hosts: Frontandbackendprod:Frontandbackendstage
-  tasks:
-    - name: Create user 
-      user:
-        name: david
-        groups: dhbw
-        createhome: yes
-        state: present
-    - name: Copy user SSH key  
-      authorized_key:
-        user: david
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/DavidHolzwarth.pub') }}"
-        state: present
-
-
-    - name: Create user 
-      user:
-        name: benny
-        groups: dhbw
-        createhome: yes
-        state: present
-    - name: Copy user SSH key  
-      authorized_key:
-        user: benny
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/BenjaminWillim.pub') }}"
-        state: present
-
-############################ api gateway
-
-- name: Users setup APIGW
-  hosts: APIgatestage:APIgateprod
-  tasks:
-
-    - name: Create user 
-      user:
-        name: silas
-        groups: dhbw
-        createhome: yes
-        state: present
-    - name: Copy user SSH key  
-      authorized_key:
-        user: silas
-        key: "{{ lookup('file', '/Users/alex/github/webdev-advanced/ssh-keys/silas-schlotz.pub') }}"
-        state: present
+    - name: Install necessary packages
+      ansible.builtin.yum:
+        name:
+          - mariadb
+          - firewalld
+    - name: Configure firewall
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+    - name: Open MySQL ports (etc. )identical to mariadb) on firewall
+      firewalld:
+        name: mysql
+        permanent: true
+        state: enabled
+    - name: 
+      service: 
+        name: firewalld
+        state: restarted
+        

@@ -1,0 +1,76 @@
+- name: Starting setup for two environments including 10 servers in total 
+  hosts: Databaseprod:Databasestage
+  become: true
+  tasks: 
+
+############################
+# DB1 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database1 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db1/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb1', 'stagedb1']
+
+############################
+# DB2 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database2 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db2/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb2', 'stagedb2']
+
+############################
+# DB3 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database3 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db3/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb3', 'stagedb3']
+
+
+# ###########################
+# mariadb setup 
+# ###########################
+- name: Settup up mariadb so it can be used on all DB servers 
+  hosts: Databaseprod:Databasestage
+  become: true
+  tasks: 
+
+    - name: Install necessary packages
+      ansible.builtin.yum:
+        name:
+          - mariadb
+          - firewalld
+    - name: Configure firewall
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+    - name: Open MySQL ports (etc. )identical to mariadb) on firewall
+      firewalld:
+        name: mysql
+        permanent: true
+        state: enabled
+    - name: 
+      service: 
+        name: firewalld
+        state: restarted
+        
