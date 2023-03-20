@@ -13,3 +13,6 @@ ansible -i production -i staging all -m shell -a "sar -u -s $(date -d '1 hour ag
 
 # Fix IPv6 problem for docker images
 ansible -i production -i staging all -m shell -a "docker login registry.ipv6.docker.com"
+
+# delete all currently saved cron jobs
+ansible -i production -i staging all -m cron -a "name='*' state=absent"
