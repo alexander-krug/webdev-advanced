@@ -1,0 +1,8 @@
+---
+- name: Copy docker-compose to servers with executable permissions
+  hosts: all
+  tasks:
+    - name: Upgrade all packages
+      ansible.builtin.yum:
+        name: '*'
+        state: latest

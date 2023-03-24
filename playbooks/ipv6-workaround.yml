@@ -1,0 +1,17 @@
+---
+- name: Add express-gateway downloadserver IPv6 toto /etc/hosts if not present
+  hosts: APIgateprod:APIgatestage
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Check if line exists in /etc/hosts file
+      shell: grep -q "registry.npmjs.org" /etc/hosts
+      register: grep_result
+      changed_when: false
+
+    - name: Add line to /etc/hosts file if it does not exist
+      lineinfile:
+        path: /etc/hosts
+        line: "2606:4700::6810:1323 registry.npmjs.org"
+      when: grep_result.rc != 0
+

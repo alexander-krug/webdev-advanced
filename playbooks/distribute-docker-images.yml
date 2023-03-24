@@ -1,0 +1,65 @@
+---
+- name: Copy Traefik Docker image to the APIGW servers
+  hosts: APIgateprod:APIgatestage
+  become: true
+
+  # start by pulling images
+  tasks:
+    - name: Pull Traefik Docker image if not yet pulled
+      containers.podman.podman_image:
+        name: traefik:v2.0
+        state: present
+    - name: Pull consul image if not yet pulled
+      containers.podman.podman_image: 
+        name: hashicorp/consul:1.13
+        state: present
+    - name: Pull registrator image if not yet pulled
+      containers.podman.podman_image: 
+        name: gliderlabs/registrator:master
+        state: present
+
+    # turn images into tarballs 
+    - name: Save Traefik Docker image as tar file
+      containers.podman.podman_image_save:
+        name: traefik:v2.0
+        dest: /tmp/traefik.tar
+    - name: Save consul Docker image as tar file
+      containers.podman.podman_image_save:
+        name: hashicorp/consul:1.13
+        dest: /tmp/consul.tar
+    - name: Save registrator Docker image as tar file
+      containers.podman.podman_image_save:
+        name: gliderlabs/registrator:master
+        dest: /tmp/registrator.tar
+
+    # copy tarballs to servers
+    - name: Copy Traefik Docker image to servers
+      copy:
+        src: /tmp/traefik.tar
+        dest: /tmp/traefik.tar
+  
+      - name: Copy consul Docker image to servers
+      copy:
+        src: /tmp/consul.tar
+        dest: /tmp/consul.tar
+    - name: Copy registrator Docker image to servers
+      copy:
+        src: /tmp/registrator.tar
+        dest: /tmp/registrator.tar
+
+    # load tarballs into docker/podman
+    - name: Load Traefik Docker image from tar file
+      docker_image_load:
+        src: /tmp/traefik.tar
+
+    - name: Load consul Docker image from tar file
+      docker_image_load:
+        src: /tmp/consul.tar
+
+    - name: Load registrator Docker image from tar file
+      docker_image_load:
+        src: /tmp/registrator.tar
+
+
+
+

@@ -1,0 +1,138 @@
+---
+# Setup for all Servers
+- name: Starting setup for two environments including 10 servers in total 
+  hosts: all
+  gather_facts: false
+  become: yes
+  tasks: 
+
+    - name: Install a list of packages (sysstat, podman, podman-docker, bash-completion, firewalld, mlocate)
+      ansible.builtin.yum:
+        name:
+          - sysstat
+          - podman
+          - podman-docker
+          - bash-completion
+          - firewalld
+          - mlocate
+        state: present
+
+    - name: Start and enable sysstat for the sar command to work
+      service:
+        name: sysstat 
+        enabled: true
+        state: started
+
+    - name: Start and enable podman for the docker-compose command to work
+      service: 
+        name: podman
+        enabled: true
+        state: started
+
+    - name: Start and enable podman.socket for the docker-compose command to work
+      service: 
+        name: podman.socket
+        enabled: true
+        state: started
+        #cmd: sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+    - name: Copy the .bashrc file (alias for podman), with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/.bashrc
+        dest: /home/centos/.bashrc
+        owner: centos
+        group: centos
+        mode: u=rw,g=r,o=r
+        backup: yes
+
+    - name: Copy the binary of docker-compose to servers with executable permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/docker-compose
+        dest: /usr/local/bin/docker-compose
+        mode: u=rwx,g=rx,o=rx
+        owner: root
+        group: root
+        backup: yes
+
+    #FIXME: work with sudoers.d
+    - name: Copy the sudoers file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/sudoers
+        dest: /etc/sudoers
+        owner: root
+        group: root
+        mode: u=rw,g=r
+        backup: yes
+
+    - name: Create dhbw group
+      group:
+        name: dhbw
+        state: present
+
+    - name: Create /dhbw directory
+      file:
+        path: /dhbw
+        state: directory
+        owner: root
+        group: dhbw
+        mode: '0755'
+
+
+# ###########################
+# production environment setup 
+# ###########################
+
+    - name: Copy the hosts file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/production-environment/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      when: inventory_hostname in groups['Databaseprod'] + groups['Frontandbackendprod'] + groups['APIgateprod']
+
+############################
+# staging environment setup 
+############################
+
+    - name: Copy the hosts file, with fitting permissions, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/staging-environment/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      when: inventory_hostname in groups['Databasestage'] + groups['Frontandbackendstage'] + groups['APIgatestage']
+
+############################
+# APIgw setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the APIgateway into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/apigw/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in groups['APIgatestage'] + groups['APIgateprod']
+
+
+############################
+# Front- and Backend setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the Front- and Backend into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/febe/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in groups['Frontandbackendstage'] + groups['Frontandbackendprod']
+
+

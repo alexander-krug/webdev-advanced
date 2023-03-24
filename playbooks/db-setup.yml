@@ -1,0 +1,346 @@
+- name: Starting setup for 6 db servers 
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  vars:
+    script_path: "/home/centos/sql-backup-script.sh"
+  tasks: 
+
+
+############################
+# Distribute backup script to servers
+############################
+
+# this only works if ~/.my.cnf contains a valid backup user:
+# [mysqldump]
+# user = mysqluser
+# password = secret 
+
+
+    - name: Create symbolic link for auth_gssapi.so
+      file:
+        src: /usr/lib64/mariadb/plugin/auth_gssapi.so
+        dest: /usr/auth_gssapi.so
+        state:  link
+
+
+    - name: copy the script to all DB servers
+      ansible.builtin.copy: 
+        src: /Users/alex/github/webdev-advanced/sql-backup-script.sh
+        dest: /home/centos
+        owner: centos
+        group: dhbw
+        mode: '0711'
+        backup: yes
+
+    - name: Add cronjob
+      cron:
+        name: "sql-backup-script"
+        job: "{{ script_path }}"
+        minute: "0"
+        hour: "3"
+        user: "centos"
+
+    - name: copy the user login data to all servers
+      ansible.builtin.copy: 
+        src: /Users/alex/Desktop/.my.cnf
+        dest: /home/centos
+        owner: centos
+        group: centos
+        mode: '0600'  
+        backup: yes 
+    - name: Increase limit to 100K
+      ansible.builtin.copy: 
+        src: /Users/alex/github/webdev-advanced/db/limits.conf
+        dest: /etc/systemd/system/mariadb.service.d/
+        owner: mysql
+        group: mysql
+        mode: '0644'
+        backup: yes
+    - name: Reload the daemon after config file change
+      ansible.builtin.command: sudo systemctl daemon-reload
+
+############################
+# DB1 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database1 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db1/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb1', 'stagedb1']
+
+############################
+# DB2 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database2 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db2/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb2', 'stagedb2']
+
+############################
+# DB3 setup from here on
+############################
+
+    - name: Copy a new "docker-compose.yml" file, specifically for the database3 servers into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/db3/docker-compose.yml
+        dest: /dhbw
+        owner: root
+        group: dhbw
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb3', 'stagedb3']
+
+
+# ###########################
+# mariadb setup 
+# ###########################
+- name: Settup up mariadb so it can be used on all DB servers 
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks: 
+
+    - name: Install necessary packages
+      ansible.builtin.yum:
+        name:
+          - mariadb-server
+          - firewalld
+          - mariadb-server-galera
+
+    - name: Configure firewall
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+    - name: Open MySQL ports (etc. )identical to mariadb) on firewall
+      firewalld:
+        permanent: true
+        immediate: true
+        service: "{{ item }}"
+        state: enabled
+      with_items:
+        - mysql
+    - name: 
+      service: 
+        name: firewalld
+        state: restarted
+        
+# mariadb mirroring setup
+
+- name: Setting up mirroring 
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks: 
+
+    - name: Install necessary packages rsync and selinux utils for mirroring
+      ansible.builtin.yum:
+        name:
+          - rsync
+          - policycoreutils-python-utils
+
+- name: Add permanent firewall rules for mirroring
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Add port 3306/tcp
+      firewalld:
+        port: 3306/tcp
+        permanent: true
+        state: enabled
+    - name: Add port 4567/tcp
+      firewalld:
+        port: 4567/tcp
+        permanent: true
+        state: enabled
+    - name: Add port 4568/tcp
+      firewalld:
+        port: 4568/tcp
+        permanent: true
+        state: enabled
+    - name: Add port 4444/tcp
+      firewalld:
+        port: 4444/tcp
+        permanent: true
+        state: enabled
+    - name: Add port 4567/udp
+      firewalld:
+        port: 4567/udp
+        permanent: true
+        state: enabled
+
+# galera conf file
+- name: Copy individual config files for mirroring to each server, backing up the original if not identical
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks:
+    - name: stagedb1
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/stagedb1/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['stagedb1']
+    - name: stagedb2
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/stagedb2/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['stagedb2']
+    - name: stagedb3
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/stagedb3/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['stagedb3']
+    - name: proddb1
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/proddb1/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb1']
+    - name: proddb2
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/proddb2/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb2']
+    - name: proddb3
+      ansible.builtin.copy:
+        src: /Users/alex/github/webdev-advanced/db/galera-config-files/proddb3/galera.cnf
+        dest: /etc/my.cnf.d/
+        owner: centos
+        group: centos
+        mode: '0644'
+        backup: yes
+      when: inventory_hostname in ['proddb3']
+
+# prod/stage individual firewall config
+
+- name: Firewalld config specifically for staging environment
+  hosts: Databasestage
+  gather_facts: false
+  become: true
+  tasks:
+
+  - name: Add firewall rule for stagedb1
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:fe70:ea1/32
+      permanent: yes
+      state: enabled
+      
+  - name: Add firewall rule for stagedb2
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:fe4a:244/32
+      permanent: yes
+      state: enabled
+      
+  - name: Add firewall rule for stagedb3
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:fe20:cc49/32
+      permanent: yes
+      state: enabled
+
+
+
+- name: Firewalld config specifically for production environment
+  hosts: Databaseprod
+  gather_facts: false
+  become: true
+  tasks:
+
+  - name: Add firewall rule for proddb1
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:fe3d:7754/32
+      permanent: yes
+      state: enabled
+      
+  - name: Add firewall rule for proddb2
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:fed3:369f/32
+      permanent: yes
+      state: enabled
+      
+  - name: Add firewall rule for proddb3
+    firewalld:
+      source: 2001:7c0:2320:2:f816:3eff:feb6:36a7/32
+      permanent: yes
+      state: enabled
+
+
+  
+
+  # at the end reload firewalld to make changes go live
+
+- name: Reload firewalld to makes permanent changes go live
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks:
+    - name: 
+      service: 
+        name: firewalld
+        state: restarted
+
+
+# ###########################
+# selinux setup for mirroring 
+# ###########################
+
+- name: Setting up mirroring 
+  hosts: Databaseprod:Databasestage
+  gather_facts: false
+  become: true
+  tasks: 
+    - name: Add TCP port 4567 to SELinux MySQL port type
+      seport:
+        ports: 4567
+        proto: tcp
+        setype: mysqld_port_t
+        state: present
+    - name: Add UDP port 4567 to SELinux MySQL port type
+      seport:
+        ports: 4567
+        proto: udp
+        setype: mysqld_port_t
+        state: present
+    - name: Add TCP port 4568 to SELinux MySQL port type
+      seport:
+        ports: 4568
+        proto: tcp
+        setype: mysqld_port_t
+        state: present
+    - name: Add TCP port 4444 to SELinux MySQL port type
+      seport:
+        ports: 4444
+        proto: tcp
+        setype: mysqld_port_t
+        state: present
