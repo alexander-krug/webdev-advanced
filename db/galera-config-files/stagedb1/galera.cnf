@@ -1,0 +1,29 @@
+[mysqld]
+query_cache_size=0
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+innodb_doublewrite=1
+query_cache_type=0
+
+bind-address = ::
+
+# Galera Provider Configuration
+wsrep_on=ON
+wsrep_provider=/usr/lib64/galera/libgalera_smm.so
+
+# Galera Cluster Configuration
+wsrep_cluster_name="test_cluster"
+wsrep_cluster_address="gcomm://[2001:7c0:2320:2:f816:3eff:fe70:ea1],[2001:7c0:2320:2:f816:3eff:fe4a:244],[2001:7c0:2320:2:f816:3eff:fe20:cc49]"
+# wsrep_cluster_address="gcomm://128cdb17-3cf0-49e7-90f0-11d792fdca09.ma.bw-cloud-instance.org,0818ba12-a8f5-4d0f-a18d-393aeff0cbf2.ma.bw-cloud-instance.org,6d5ea713-e2c6-4c96-84e8-240a02b5454a.ma.bw-cloud-instance.org"
+
+
+# Galera Synchronization Configuration
+wsrep_sst_method=rsync
+
+# Galera Node Configuration
+wsrep_node_name="stagedb1"
+
+wsrep_provider_options = "gmcast.listen_addr=tcp://[::]:4567; ist.recv_addr=[2001:7c0:2320:2:f816:3eff:fe70:ea1]:4568"
+wsrep_node_address = "[2001:7c0:2320:2:f816:3eff:fe70:ea1]:4567"
+wsrep_sst_receive_address = "[2001:7c0:2320:2:f816:3eff:fe70:ea1]:4444"
